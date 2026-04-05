@@ -251,6 +251,11 @@ export const FillBlanks: React.FC<FillBlanksProps> = ({ originalText, blankedTex
       blankedIndex++;
     }
     
+    // 确保答案数量和挖空数量一致
+    while (answers.length < markers.length) {
+      answers.push('');
+    }
+    
     // 特殊处理：修复常见的匹配错误
     if (answers.length >= 6) {
       // 第6空应该是 "defence secretaries"
@@ -289,11 +294,6 @@ export const FillBlanks: React.FC<FillBlanksProps> = ({ originalText, blankedTex
       }
     }
     
-    // 确保答案数量和挖空数量一致
-    while (answers.length < markers.length) {
-      answers.push('');
-    }
-    
     console.log('Generated answers:', answers);
     console.log('Blank count:', markers.length);
     console.log('Answer count:', answers.length);
@@ -306,8 +306,18 @@ export const FillBlanks: React.FC<FillBlanksProps> = ({ originalText, blankedTex
       wordIndex: index
     }));
     
+    // 确保blankMatches数量与markers数量一致
+    while (newBlankMatches.length < markers.length) {
+      newBlankMatches.push({
+        fullMatch: '[BLANK]',
+        startIndex: 0,
+        endIndex: 0,
+        wordIndex: newBlankMatches.length
+      });
+    }
+    
     // 构建blanks
-    const newBlanks: Blank[] = blankPositions.map((_, index) => ({
+    const newBlanks: Blank[] = markers.map((_, index) => ({
       id: `blank-${index}`,
       answer: answers[index] || '',
       userAnswer: '',
