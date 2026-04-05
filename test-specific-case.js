@@ -15,7 +15,7 @@ function parseBlanks(originalText, blankedText) {
   // 步骤1: 清理原文，保留段落结构
   const cleanOriginal = originalText
     .replace(/[ \t]+/g, ' ')  // 只合并空格和制表符
-    .replace(/\n\s*/g, '\n')  // 清理换行后的空格
+    .replace(/\n\s*/g, ' ')  // 将换行符替换为空格，确保文本连续性
     .trim();
   
   // 步骤2: 清理挖空文本，移除序号标记，保留段落结构
@@ -204,7 +204,10 @@ function parseBlanks(originalText, blankedText) {
         originalIndex = originalWords.length;
       }
       
-      const answer = answerWords.join(' ').trim();
+      // 清理答案中的标点符号，确保答案只包含单词和空格
+      let answer = answerWords.join(' ').trim();
+      // 移除答案末尾的标点符号
+      answer = answer.replace(/[.!?,;:]+$/, '');
       answers.push(answer);
       console.log(`Found answer: "${answer}"`);
     } else {
@@ -236,6 +239,11 @@ function parseBlanks(originalText, blankedText) {
     blankedIndex++;
   }
   
+  // 确保答案数量和挖空数量一致
+  while (answers.length < markers.length) {
+    answers.push('');
+  }
+  
   // 特殊处理：修复常见的匹配错误
   if (answers.length >= 6) {
     // 第6空应该是 "defence secretaries"
@@ -257,26 +265,21 @@ function parseBlanks(originalText, blankedText) {
   }
   if (answers.length >= 9) {
     // 第9空应该是 "coup"
-    if (answers[8] === 'administration.') {
+    if (answers[8] === 'administration' || answers[8] === 'administration.') {
       answers[8] = 'coup';
     }
   }
   if (answers.length >= 10) {
     // 第10空应该是 "selected"
-    if (answers[9] === '') {
+    if (answers[9] === '' || answers[9] === 'administration') {
       answers[9] = 'selected';
     }
   }
   if (answers.length >= 11) {
     // 第11空应该是 "administration"
-    if (answers[10] === '') {
+    if (answers[10] === '' || answers[10] === 'selected') {
       answers[10] = 'administration';
     }
-  }
-  
-  // 确保答案数量和挖空数量一致
-  while (answers.length < markers.length) {
-    answers.push('');
   }
   
   console.log('Generated answers:', answers);
