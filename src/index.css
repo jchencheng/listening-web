@@ -358,6 +358,16 @@ body {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
   }
+  
+  .list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .list-header .btn {
+    width: 100%;
+  }
 }
 
 .video-container {
@@ -500,21 +510,7 @@ body {
   flex-wrap: wrap;
 }
 
-@media (max-width: 968px) {
-  .practice-content {
-    grid-template-columns: 1fr;
-  }
 
-  .list-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .list-header .btn {
-    width: 100%;
-  }
-}
 
 @media (max-width: 640px) {
   .app-container {
@@ -548,5 +544,13 @@ body {
 
   .card-actions {
     flex-direction: column;
+  }
+  
+  .video-section {
+    padding: 12px;
+  }
+  
+  .video-container {
+    padding-bottom: 56.25%;
   }
 }
