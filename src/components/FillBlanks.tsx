@@ -449,32 +449,45 @@ export const FillBlanks: React.FC<FillBlanksProps> = ({ originalText, blankedTex
 
   const correctCount = blanks.filter(b => b.status === 'correct').length;
   const totalCount = blanks.length;
+  const hasText = originalText && blankedText;
 
   return (
     <div className="fill-blanks-container">
-      <div className="exercise-text">
-        {renderText()}
-      </div>
+      {hasText ? (
+        <>
+          <div className="exercise-text">
+            {renderText()}
+          </div>
 
-      <div className="exercise-controls">
-        <div className="score-display">
-          得分: {correctCount} / {totalCount}
-        </div>
-        <div className="control-buttons">
-          <button onClick={checkAll} className="btn btn-primary">
+          <div className="exercise-controls">
+            <div className="score-display">
+              得分: {correctCount} / {totalCount}
+            </div>
+            <div className="control-buttons">
+              <button onClick={checkAll} className="btn btn-primary">
+                <Check size={18} />
+                检查答案
+              </button>
+              <button onClick={resetAll} className="btn btn-secondary">
+                <RotateCcw size={18} />
+                重置
+              </button>
+              <button onClick={() => setShowAnswers(!showAnswers)} className={`btn ${showAnswers ? 'btn-warning' : 'btn-info'}`}>
+                {showAnswers ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showAnswers ? '隐藏答案' : '显示答案'}
+              </button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>该练习未提供文本内容</p>
+          <button onClick={() => onComplete && onComplete(0, 0)} className="btn btn-primary">
             <Check size={18} />
-            检查答案
-          </button>
-          <button onClick={resetAll} className="btn btn-secondary">
-            <RotateCcw size={18} />
-            重置
-          </button>
-          <button onClick={() => setShowAnswers(!showAnswers)} className={`btn ${showAnswers ? 'btn-warning' : 'btn-info'}`}>
-            {showAnswers ? <EyeOff size={18} /> : <Eye size={18} />}
-            {showAnswers ? '隐藏答案' : '显示答案'}
+            标记为已完成
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 };
