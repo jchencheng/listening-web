@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Exercise, TestRecord } from '../types';
-import { Play, Edit2, Trash2, Plus, CheckCircle2 } from 'lucide-react';
+import { Play, Edit2, Trash2, Plus, CheckCircle2, Trophy, Calendar, BookOpen } from 'lucide-react';
 
 interface ExerciseListProps {
   exercises: Exercise[];
@@ -29,6 +29,21 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     });
   };
 
+  // 计算成就数据
+  const completedExercises = testRecords.size;
+  
+  // 计算累计练习天数
+  const getUniqueDays = () => {
+    const days = new Set<string>();
+    testRecords.forEach(record => {
+      const date = new Date(record.completedAt);
+      const dateStr = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+      days.add(dateStr);
+    });
+    return days.size;
+  };
+  const practiceDays = getUniqueDays();
+
   return (
     <div className="exercise-list-container">
       <div className="list-header">
@@ -37,6 +52,39 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
           <Plus size={18} />
           创建新练习
         </button>
+      </div>
+
+      {/* 成就板块 */}
+      <div className="achievement-section">
+        <div className="achievement-card">
+          <div className="achievement-icon achievement-icon-trophy">
+            <Trophy size={28} />
+          </div>
+          <div className="achievement-content">
+            <div className="achievement-number">{completedExercises}</div>
+            <div className="achievement-label">已完成听力</div>
+          </div>
+        </div>
+        
+        <div className="achievement-card">
+          <div className="achievement-icon achievement-icon-calendar">
+            <Calendar size={28} />
+          </div>
+          <div className="achievement-content">
+            <div className="achievement-number">{practiceDays}</div>
+            <div className="achievement-label">累计练习天数</div>
+          </div>
+        </div>
+        
+        <div className="achievement-card">
+          <div className="achievement-icon achievement-icon-book">
+            <BookOpen size={28} />
+          </div>
+          <div className="achievement-content">
+            <div className="achievement-number">{exercises.length}</div>
+            <div className="achievement-label">创建练习</div>
+          </div>
+        </div>
       </div>
 
       {exercises.length === 0 ? (
