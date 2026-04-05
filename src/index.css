@@ -345,7 +345,12 @@ body {
     border-left: none;
     border-right: none;
     border-top: none;
-    max-height: 50vh;
+    padding: 16px;
+    max-height: none;
+  }
+  
+  .video-container {
+    padding-bottom: 56.25%;
   }
   
   .exercise-section {

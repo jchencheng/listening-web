@@ -26,16 +26,18 @@ export const FillBlanks: React.FC<FillBlanksProps> = ({ originalText, blankedTex
   }, [originalText, blankedText]);
 
   const parseBlanks = () => {
-    // 步骤1: 清理原文
+    // 步骤1: 清理原文，保留段落结构
     const cleanOriginal = originalText
-      .replace(/[\s\n\r]+/g, ' ')  // 合并空白字符
+      .replace(/[ \t]+/g, ' ')  // 只合并空格和制表符
+      .replace(/\n\s*/g, '\n')  // 清理换行后的空格
       .trim();
     
-    // 步骤2: 清理挖空文本，移除序号标记
+    // 步骤2: 清理挖空文本，移除序号标记，保留段落结构
     let cleanedBlankedText = blankedText
       .replace(/\(\d+\)/g, ' ')     // 清理 (1) (2) 等序号
       .replace(/（\d+）/g, ' ')     // 清理 （1）（2）等序号
-      .replace(/[\s\n\r]+/g, ' ')  // 合并空白字符
+      .replace(/[ \t]+/g, ' ')     // 只合并空格和制表符
+      .replace(/\n\s*/g, '\n')     // 清理换行后的空格
       .trim();
     
     // 步骤3: 识别下划线挖空标记
@@ -61,49 +63,92 @@ export const FillBlanks: React.FC<FillBlanksProps> = ({ originalText, blankedTex
       return;
     }
     
-    // 步骤4: 构建清理后的文本
+    // 步骤4: 构建清理后的文本，保留段落结构
     let cleanText = cleanedBlankedText;
     for (let i = markers.length - 1; i >= 0; i--) {
       const m = markers[i];
-      cleanText = cleanText.slice(0, m.start) + '[BLANK]' + cleanText.slice(m.end);
+      // 确保挖空标记周围有空格
+      const before = cleanText.slice(0, m.start);
+      const after = cleanText.slice(m.end);
+      const needsSpaceBefore = before && !before.endsWith(' ') && !before.endsWith('\n');
+      const needsSpaceAfter = after && !after.startsWith(' ') && !after.startsWith('\n');
+      
+      const blankWithSpaces = (needsSpaceBefore ? ' ' : '') + '[BLANK]' + (needsSpaceAfter ? ' ' : '');
+      cleanText = before + blankWithSpaces + after;
     }
     
-    // 清理多余的空白字符
-    cleanText = cleanText.replace(/[\s\n\r]+/g, ' ').trim();
+    // 清理挖空标记周围的多余空格
+    cleanText = cleanText
+      .replace(/[ \t]+\[BLANK\][ \t]+/g, ' [BLANK] ')
+      .replace(/\n[ \t]*\[BLANK\][ \t]*/g, '\n[BLANK] ')
+      .replace(/[ \t]*\[BLANK\][ \t]*\n/g, ' [BLANK]\n')
+      .trim();
+    
+    // 确保挖空标记周围始终有空格
+    cleanText = cleanText
+      .replace(/([^\s\n])\[BLANK\]/g, '$1 [BLANK]')
+      .replace(/\[BLANK\]([^\s\n])/g, '[BLANK] $1')
+      .trim();
+    
+    // 再次清理多余的空格，确保格式一致
+    cleanText = cleanText
+      .replace(/[ \t]+/g, ' ')  // 合并连续空格
+      .replace(/\n\s*/g, '\n')  // 清理换行后的空格
+      .trim();
     
     // 步骤5: 智能清理挖空文本，只保留与原文相关的内容
-    const originalWords = cleanOriginal.split(/\s+/).filter(w => w.length > 0);
+    // 为了匹配，将原文转换为单行并提取单词
+    const singleLineOriginal = cleanOriginal.replace(/\n/g, ' ');
+    const originalWords = singleLineOriginal
+      .split(/\s+/)
+      .filter(w => w.length > 0);
     
-    // 分割挖空文本为文本段
+    // 分割挖空文本为文本段，保留段落结构
     let segments = cleanText.split('[BLANK]');
     
-    // 智能清理每个文本段，只保留在原文中存在的内容
+    // 智能清理每个文本段，只保留与原文相关的内容
     segments = segments.map(segment => {
       if (!segment || segment.trim() === '') {
         return segment;
       }
       
-      const segmentWords = segment.trim().split(/\s+/);
-      const cleanedWords: string[] = [];
-      
-      // 只保留在原文中存在的单词
-      for (const word of segmentWords) {
-        const normWord = word.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
-        if (normWord) {
-          const found = originalWords.some(origWord => 
-            origWord.toLowerCase().replace(/[^a-zA-Z0-9]/g, '') === normWord
-          );
-          if (found) {
-            cleanedWords.push(word);
+      // 保留段落结构
+      const paragraphs = segment.split('\n');
+      const cleanedParagraphs = paragraphs.map(para => {
+        const paraWords = para.trim().split(/\s+/);
+        const cleanedWords: string[] = [];
+        
+        // 只保留在原文中存在的单词
+        for (const word of paraWords) {
+          const normWord = word.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+          if (normWord) {
+            const found = originalWords.some(origWord => 
+              origWord.toLowerCase().replace(/[^a-zA-Z0-9]/g, '') === normWord
+            );
+            if (found) {
+              cleanedWords.push(word);
+            }
           }
         }
-      }
+        
+        return cleanedWords.join(' ');
+      });
       
-      return cleanedWords.join(' ');
+      return cleanedParagraphs.join('\n').trim();
     });
     
-    // 重新构建清理后的文本
-    cleanText = segments.join('[BLANK]').replace(/[\s\n\r]+/g, ' ').trim();
+    // 重新构建清理后的文本，保留段落结构
+    cleanText = segments.join('[BLANK]')
+      .replace(/[ \t]+\[BLANK\][ \t]+/g, ' [BLANK] ')
+      .replace(/\n[ \t]*\[BLANK\][ \t]*/g, '\n[BLANK] ')
+      .replace(/[ \t]*\[BLANK\][ \t]*\n/g, ' [BLANK]\n')
+      .trim();
+    
+    // 清理所有多余的空白字符，确保格式一致
+    cleanText = cleanText
+      .replace(/[ \t]+/g, ' ')  // 合并连续空格
+      .replace(/\n\s*/g, '\n')  // 清理换行后的空格
+      .trim();
     
     // 步骤6: 提取挖空位置
     const blankPositions: { start: number; end: number }[] = [];
@@ -125,19 +170,20 @@ export const FillBlanks: React.FC<FillBlanksProps> = ({ originalText, blankedTex
     let lastPos = 0;
     
     for (let i = 0; i < markers.length; i++) {
-      const segment = segments[i] ? segments[i].trim() : '';
-      const nextSegment = segments[i + 1] ? segments[i + 1].trim() : '';
+      // 清理段落结构，只保留文本内容用于匹配
+      const segment = segments[i] ? segments[i].replace(/\n/g, ' ').trim() : '';
+      const nextSegment = segments[i + 1] ? segments[i + 1].replace(/\n/g, ' ').trim() : '';
       
       console.log(`Processing blank ${i}: segment="${segment}", nextSegment="${nextSegment}"`);
       
       if (segment && nextSegment) {
         // 有前后文本，在原文中找到对应的位置
-        const segmentPos = cleanOriginal.indexOf(segment, lastPos);
+        const segmentPos = singleLineOriginal.indexOf(segment, lastPos);
         if (segmentPos !== -1) {
-          const nextSegmentPos = cleanOriginal.indexOf(nextSegment, segmentPos + segment.length);
+          const nextSegmentPos = singleLineOriginal.indexOf(nextSegment, segmentPos + segment.length);
           if (nextSegmentPos !== -1) {
             // 提取答案
-            const answer = cleanOriginal.slice(segmentPos + segment.length, nextSegmentPos).trim();
+            const answer = singleLineOriginal.slice(segmentPos + segment.length, nextSegmentPos).trim();
             answers.push(answer);
             lastPos = nextSegmentPos;
             console.log(`Found answer: "${answer}"`);
@@ -151,9 +197,9 @@ export const FillBlanks: React.FC<FillBlanksProps> = ({ originalText, blankedTex
         }
       } else if (segment) {
         // 只有前文本，取到末尾
-        const segmentPos = cleanOriginal.indexOf(segment, lastPos);
+        const segmentPos = singleLineOriginal.indexOf(segment, lastPos);
         if (segmentPos !== -1) {
-          const answer = cleanOriginal.slice(segmentPos + segment.length).trim();
+          const answer = singleLineOriginal.slice(segmentPos + segment.length).trim();
           answers.push(answer);
           lastPos = segmentPos + segment.length;
           console.log(`Found answer: "${answer}"`);
@@ -163,9 +209,9 @@ export const FillBlanks: React.FC<FillBlanksProps> = ({ originalText, blankedTex
         }
       } else if (nextSegment) {
         // 只有后文本，从开头取到后文本
-        const nextSegmentPos = cleanOriginal.indexOf(nextSegment, lastPos);
+        const nextSegmentPos = singleLineOriginal.indexOf(nextSegment, lastPos);
         if (nextSegmentPos !== -1) {
-          const answer = cleanOriginal.slice(lastPos, nextSegmentPos).trim();
+          const answer = singleLineOriginal.slice(lastPos, nextSegmentPos).trim();
           answers.push(answer);
           lastPos = nextSegmentPos;
           console.log(`Found answer: "${answer}"`);
