@@ -5,6 +5,7 @@ import { Check, RotateCcw, Eye, EyeOff } from 'lucide-react';
 interface FillBlanksProps {
   originalText: string;
   blankedText: string;
+  onComplete?: (score: number, total: number) => void;
 }
 
 interface BlankMatch {
@@ -14,7 +15,7 @@ interface BlankMatch {
   wordIndex: number;
 }
 
-export const FillBlanks: React.FC<FillBlanksProps> = ({ originalText, blankedText }) => {
+export const FillBlanks: React.FC<FillBlanksProps> = ({ originalText, blankedText, onComplete }) => {
   const [blanks, setBlanks] = useState<Blank[]>([]);
   const [blankMatches, setBlankMatches] = useState<BlankMatch[]>([]);
   const [cleanedText, setCleanedText] = useState('');
@@ -377,6 +378,13 @@ export const FillBlanks: React.FC<FillBlanksProps> = ({ originalText, blankedTex
       };
     });
     setBlanks(newBlanks);
+    
+    // 计算得分并调用onComplete回调
+    if (onComplete) {
+      const correctCount = newBlanks.filter(b => b.status === 'correct').length;
+      const totalCount = newBlanks.length;
+      onComplete(correctCount, totalCount);
+    }
   };
 
   const resetAll = () => {

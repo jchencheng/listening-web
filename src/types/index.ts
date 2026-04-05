@@ -14,3 +14,11 @@ export interface Blank {
   userAnswer: string;
   status: 'idle' | 'correct' | 'wrong';
 }
+
+export interface TestRecord {
+  id: string;
+  exerciseId: string;
+  score: number;
+  total: number;
+  completedAt: number;
+}

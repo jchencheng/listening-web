@@ -1,9 +1,10 @@
 import React from 'react';
-import type { Exercise } from '../types';
-import { Play, Edit2, Trash2, Plus } from 'lucide-react';
+import type { Exercise, TestRecord } from '../types';
+import { Play, Edit2, Trash2, Plus, CheckCircle2 } from 'lucide-react';
 
 interface ExerciseListProps {
   exercises: Exercise[];
+  testRecords: Map<string, TestRecord>;
   onStartExercise: (exercise: Exercise) => void;
   onEditExercise: (exercise: Exercise) => void;
   onDeleteExercise: (id: string) => void;
@@ -12,6 +13,7 @@ interface ExerciseListProps {
 
 export const ExerciseList: React.FC<ExerciseListProps> = ({
   exercises,
+  testRecords,
   onStartExercise,
   onEditExercise,
   onDeleteExercise,
@@ -48,12 +50,19 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
           {exercises.map((exercise) => (
             <div key={exercise.id} className="exercise-card">
               <div className="card-header">
-                <h3>{exercise.title}</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h3>{exercise.title}</h3>
+                  {testRecords.has(exercise.id) && (
+                    <CheckCircle2 size={16} color="#10b981" aria-label="已完成" />
+                  )}
+                </div>
                 <span className="card-date">{formatDate(exercise.updatedAt)}</span>
               </div>
-              <div className="card-preview">
-                <p>{exercise.originalText.slice(0, 100)}{exercise.originalText.length > 100 ? '...' : ''}</p>
-              </div>
+              {exercise.originalText && (
+                <div className="card-preview">
+                  <p>{exercise.originalText.slice(0, 100)}{exercise.originalText.length > 100 ? '...' : ''}</p>
+                </div>
+              )}
               <div className="card-actions">
                 <button onClick={() => onStartExercise(exercise)} className="btn btn-primary btn-small">
                   <Play size={16} />

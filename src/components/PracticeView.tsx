@@ -8,9 +8,10 @@ interface PracticeViewProps {
   exercise: Exercise;
   onBack: () => void;
   onEdit: () => void;
+  onComplete?: (exerciseId: string, score: number, total: number) => void;
 }
 
-export const PracticeView: React.FC<PracticeViewProps> = ({ exercise, onBack, onEdit }) => {
+export const PracticeView: React.FC<PracticeViewProps> = ({ exercise, onBack, onEdit, onComplete }) => {
   return (
     <div className="practice-view">
       <div className="practice-header">
@@ -33,6 +34,7 @@ export const PracticeView: React.FC<PracticeViewProps> = ({ exercise, onBack, on
           <FillBlanks
             originalText={exercise.originalText}
             blankedText={exercise.blankedText}
+            onComplete={(score, total) => onComplete && onComplete(exercise.id, score, total)}
           />
         </div>
       </div>
