@@ -106,7 +106,7 @@ export const ExerciseEditor: React.FC<ExerciseEditorProps> = ({ exercise, onSave
         </div>
 
         <div className="editor-actions">
-          <button onClick={handleSave} className="btn btn-primary" disabled={!title || !originalText || !blankedText}>
+          <button onClick={handleSave} className="btn btn-primary" disabled={!title}>
             <Save size={18} />
             保存练习
           </button>
