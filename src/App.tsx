@@ -14,15 +14,108 @@ function App() {
   const [currentView, setCurrentView] = useState<ViewMode>('list');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | undefined>();
   const [dbInitialized, setDbInitialized] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     const init = async () => {
       await db.init();
       setDbInitialized(true);
       loadExercises();
+      
+      // 从本地存储加载夜间模式设置
+      const savedDarkMode = localStorage.getItem('darkMode');
+      if (savedDarkMode === 'true') {
+        setIsDarkMode(true);
+        document.documentElement.classList.add('dark-mode');
+      }
     };
     init();
   }, []);
+
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    localStorage.setItem('darkMode', newDarkMode.toString());
+    
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark-mode');
+    } else {
+      document.documentElement.classList.remove('dark-mode');
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const allExercises = await db.getAllExercises();
+      
+      // 获取所有测试记录
+      const allTestRecords: TestRecord[] = [];
+      for (const exercise of allExercises) {
+        const records = await db.getTestRecordsByExerciseId(exercise.id);
+        allTestRecords.push(...records);
+      }
+      
+      const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        exercises: allExercises,
+        testRecords: allTestRecords
+      };
+      
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `listening-web-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      alert('数据导出成功！');
+    } catch (error) {
+      console.error('导出失败:', error);
+      alert('数据导出失败，请查看控制台了解详情。');
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    try {
+      const text = await file.text();
+      const importData = JSON.parse(text);
+      
+      if (!importData.exercises || !Array.isArray(importData.exercises)) {
+        throw new Error('无效的导入文件格式');
+      }
+      
+      if (window.confirm(`确定要导入 ${importData.exercises.length} 个练习吗？这将覆盖现有的同名练习。`)) {
+        // 导入练习
+        for (const exercise of importData.exercises) {
+          await db.saveExercise(exercise);
+        }
+        
+        // 导入测试记录
+        if (importData.testRecords && Array.isArray(importData.testRecords)) {
+          for (const record of importData.testRecords) {
+            await db.saveTestRecord(record);
+          }
+        }
+        
+        await loadExercises();
+        alert('数据导入成功！');
+      }
+    } catch (error) {
+      console.error('导入失败:', error);
+      alert('数据导入失败，请确保文件格式正确。');
+    }
+    
+    // 重置文件输入
+    event.target.value = '';
+  };
 
   const loadExercises = useCallback(async () => {
     const allExercises = await db.getAllExercises();
@@ -99,10 +192,14 @@ function App() {
         <ExerciseList
           exercises={exercises}
           testRecords={testRecords}
+          isDarkMode={isDarkMode}
           onStartExercise={handleStartExercise}
           onEditExercise={handleEditExercise}
           onDeleteExercise={handleDeleteExercise}
           onCreateExercise={handleCreateExercise}
+          onToggleDarkMode={toggleDarkMode}
+          onExport={handleExport}
+          onImport={handleImport}
         />
       )}
 

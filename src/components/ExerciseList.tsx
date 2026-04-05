@@ -1,23 +1,31 @@
 import React from 'react';
 import type { Exercise, TestRecord } from '../types';
-import { Play, Edit2, Trash2, Plus, CheckCircle2, Trophy, Calendar, BookOpen } from 'lucide-react';
+import { Play, Edit2, Trash2, Plus, CheckCircle2, Trophy, Calendar, BookOpen, Sun, Moon, Download, Upload } from 'lucide-react';
 
 interface ExerciseListProps {
   exercises: Exercise[];
   testRecords: Map<string, TestRecord>;
+  isDarkMode: boolean;
   onStartExercise: (exercise: Exercise) => void;
   onEditExercise: (exercise: Exercise) => void;
   onDeleteExercise: (id: string) => void;
   onCreateExercise: () => void;
+  onToggleDarkMode: () => void;
+  onExport: () => void;
+  onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const ExerciseList: React.FC<ExerciseListProps> = ({
   exercises,
   testRecords,
+  isDarkMode,
   onStartExercise,
   onEditExercise,
   onDeleteExercise,
-  onCreateExercise
+  onCreateExercise,
+  onToggleDarkMode,
+  onExport,
+  onImport
 }) => {
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('zh-CN', {
@@ -48,10 +56,27 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     <div className="exercise-list-container">
       <div className="list-header">
         <h1>我的练习</h1>
-        <button onClick={onCreateExercise} className="btn btn-primary">
-          <Plus size={18} />
-          创建新练习
-        </button>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button onClick={onToggleDarkMode} className="btn btn-secondary btn-small" title={isDarkMode ? '切换到日间模式' : '切换到夜间模式'}>
+            {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+          <button onClick={onExport} className="btn btn-secondary btn-small" title="导出数据">
+            <Download size={16} />
+          </button>
+          <label className="btn btn-secondary btn-small" title="导入数据" style={{ cursor: 'pointer' }}>
+            <Upload size={16} />
+            <input
+              type="file"
+              accept=".json"
+              onChange={onImport}
+              style={{ display: 'none' }}
+            />
+          </label>
+          <button onClick={onCreateExercise} className="btn btn-primary">
+            <Plus size={18} />
+            创建新练习
+          </button>
+        </div>
       </div>
 
       {/* 成就板块 */}
