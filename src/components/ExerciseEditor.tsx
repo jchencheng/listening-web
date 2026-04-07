@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Exercise } from '../types';
-import { Save, ArrowLeft, Mic } from 'lucide-react';
+import { Save, ArrowLeft, Mic, Brain } from 'lucide-react';
 
 interface ExerciseEditorProps {
   exercise?: Exercise;
@@ -16,6 +16,8 @@ export const ExerciseEditor: React.FC<ExerciseEditorProps> = ({ exercise, onSave
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcription, setTranscription] = useState('');
+  const [isSmartBlanking, setIsSmartBlanking] = useState(false);
+  const [error, setError] = useState('');
   
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -44,6 +46,38 @@ export const ExerciseEditor: React.FC<ExerciseEditorProps> = ({ exercise, onSave
       return word;
     }).join(' ');
     setBlankedText(newBlankedText);
+  };
+
+  const handleSmartBlank = async () => {
+    if (!originalText) {
+      setError('请先输入原文文本');
+      return;
+    }
+    
+    setIsSmartBlanking(true);
+    setError('');
+    
+    try {
+      console.log('[Frontend] Calling smart blank API...');
+      const response = await fetch('/api/smart-blank-generation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ originalText }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setBlankedText(data.blankedText);
+    } catch (err: any) {
+      console.error('[Frontend] Error:', err);
+      setError(err?.message || '智能挖空失败');
+    } finally {
+      setIsSmartBlanking(false);
+    }
   };
 
   const extractVideoId = (url: string): string => {
@@ -268,9 +302,33 @@ export const ExerciseEditor: React.FC<ExerciseEditorProps> = ({ exercise, onSave
             placeholder="例如：NASA's Artemis 2 mission (1)____ off 或 Hello ____! 这是一个 ____..."
             rows={4}
           />
-          <button onClick={handleAutoGenerate} className="btn btn-secondary btn-small" style={{ marginTop: '8px' }}>
-            自动隔词挖空
-          </button>
+          <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
+            <button onClick={handleAutoGenerate} className="btn btn-secondary btn-small">
+              自动隔词挖空
+            </button>
+            <button 
+              onClick={handleSmartBlank} 
+              className="btn btn-primary btn-small" 
+              disabled={isSmartBlanking || !originalText}
+            >
+              {isSmartBlanking ? (
+                <>
+                  <span className="spin" style={{ display: 'inline-block', marginRight: '4px' }}>⟳</span>
+                  智能挖空中...
+                </>
+              ) : (
+                <>
+                  <Brain size={16} />
+                  智能挖空
+                </>
+              )}
+            </button>
+          </div>
+          {error && (
+            <div style={{ marginTop: '8px', fontSize: '14px', color: 'var(--error)' }}>
+              {error}
+            </div>
+          )}
         </div>
 
         <div className="editor-actions">
