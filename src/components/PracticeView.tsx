@@ -88,7 +88,7 @@ export const PracticeView: React.FC<PracticeViewProps> = ({ exercise, onBack, on
             <div className="history-section">
               <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>历史提交记录</h3>
               <div className="history-list">
-                {testRecords.map((record, index) => (
+                {testRecords.map((record) => (
                   <div key={record.id} className="history-item">
                     <div className="history-item-header">
                       <span className="history-date">{formatDate(record.completedAt)}</span>
