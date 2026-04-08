@@ -56,7 +56,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     <div className="exercise-list-container">
       <div className="list-header">
         <h1>我的练习</h1>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="list-header-actions">
           <button onClick={onToggleDarkMode} className="btn btn-secondary btn-small" title={isDarkMode ? '切换到日间模式' : '切换到夜间模式'}>
             {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -72,7 +72,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
               style={{ display: 'none' }}
             />
           </label>
-          <button onClick={onCreateExercise} className="btn btn-primary">
+          <button onClick={onCreateExercise} className="btn btn-primary desktop-only">
             <Plus size={18} />
             创建新练习
           </button>
@@ -154,6 +154,11 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
           ))}
         </div>
       )}
+      
+      {/* 移动端悬浮按钮 */}
+      <button onClick={onCreateExercise} className="fab mobile-only">
+        <Plus size={24} />
+      </button>
     </div>
   );
 };
