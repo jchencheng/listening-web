@@ -4,6 +4,7 @@ export interface Exercise {
   videoUrl: string;
   originalText: string;
   blankedText: string;
+  translation?: string;
   createdAt: number;
   updatedAt: number;
 }

@@ -217,6 +217,10 @@ function App() {
           onBack={handleBackToList}
           onEdit={() => handleEditExercise(selectedExercise)}
           onComplete={handleSaveTestRecord}
+          onUpdateExercise={(updatedExercise) => {
+            setSelectedExercise(updatedExercise);
+            loadExercises();
+          }}
         />
       )}
     </div>
