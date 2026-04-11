@@ -180,8 +180,9 @@ function App() {
 
   if (!dbInitialized) {
     return (
-      <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-        <p>加载中...</p>
+      <div className="loading-container">
+        <div className="loading-spinner" />
+        <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>加载中...</span>
       </div>
     );
   }

@@ -176,7 +176,7 @@ export const ExerciseEditor: React.FC<ExerciseEditorProps> = ({ exercise, onSave
 
         <div className="form-group">
           <label>挖空后文本</label>
-          <div style={{ marginBottom: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+          <div className="form-hint">
             使用下划线 ____ 表示挖空，系统会自动清理序号标记如 (1)、（1）等干扰信息
           </div>
           <textarea
