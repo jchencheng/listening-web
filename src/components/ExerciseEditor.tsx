@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Exercise } from '../types';
-import { Save, ArrowLeft, Mic, Brain } from 'lucide-react';
+import { Save, ArrowLeft, Brain } from 'lucide-react';
 
 interface ExerciseEditorProps {
   exercise?: Exercise;
@@ -13,15 +13,10 @@ export const ExerciseEditor: React.FC<ExerciseEditorProps> = ({ exercise, onSave
   const [videoUrl, setVideoUrl] = useState('');
   const [originalText, setOriginalText] = useState('');
   const [blankedText, setBlankedText] = useState('');
-  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [transcription, setTranscription] = useState('');
   const [isSmartBlanking, setIsSmartBlanking] = useState(false);
   const [error, setError] = useState('');
   
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
     if (exercise) {
@@ -32,10 +27,7 @@ export const ExerciseEditor: React.FC<ExerciseEditorProps> = ({ exercise, onSave
     }
   }, [exercise]);
 
-  useEffect(() => {
-    // 检查浏览器是否支持Web Speech API
-    setIsSpeechSupported('speechRecognition' in window || 'webkitSpeechRecognition' in window);
-  }, []);
+
 
   const handleAutoGenerate = () => {
     const words = originalText.split(/\s+/);
@@ -94,96 +86,6 @@ export const ExerciseEditor: React.FC<ExerciseEditorProps> = ({ exercise, onSave
     }
     
     return '';
-  };
-
-  const handleAutoTranscribe = async () => {
-    if (!videoUrl) {
-      alert('请先输入视频链接');
-      return;
-    }
-
-    if (!isSpeechSupported) {
-      alert('您的浏览器不支持语音识别功能');
-      return;
-    }
-
-    setIsTranscribing(true);
-    setTranscription('正在准备...');
-
-    try {
-      // 检查是否有权限访问麦克风
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      // 创建MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        // 使用Web Speech API进行语音识别
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'en-US';
-        recognition.continuous = true;
-        recognition.interimResults = true;
-
-        recognition.onresult = (event: any) => {
-          let transcript = '';
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            transcript += event.results[i][0].transcript;
-          }
-          setTranscription(transcript);
-          setOriginalText(transcript);
-        };
-
-        recognition.onerror = (event: any) => {
-          console.error('语音识别错误:', event.error);
-          setTranscription('语音识别错误: ' + event.error);
-          setIsTranscribing(false);
-        };
-
-        recognition.onend = () => {
-          setIsTranscribing(false);
-        };
-
-        // 开始识别
-        recognition.start();
-      };
-
-      // 开始录制
-      mediaRecorder.start();
-      setTranscription('正在录制...请播放视频');
-      
-      // 自动播放视频 - iframe中无法直接控制，用户需要手动播放
-      setTranscription('正在录制...请手动播放视频');
-      
-      // 尝试通过iframe的contentWindow控制视频播放（可能会被浏览器阻止）
-      if (iframeRef.current && iframeRef.current.contentWindow) {
-        try {
-          iframeRef.current.contentWindow.postMessage('playVideo', '*');
-        } catch (err) {
-          console.error('无法控制视频播放:', err);
-        }
-      }
-      
-    } catch (error) {
-      console.error('获取麦克风权限失败:', error);
-      setTranscription('获取麦克风权限失败');
-      setIsTranscribing(false);
-    }
-  };
-
-  const stopTranscription = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-    setIsTranscribing(false);
   };
 
   const handleSave = () => {
@@ -270,25 +172,6 @@ export const ExerciseEditor: React.FC<ExerciseEditorProps> = ({ exercise, onSave
             rows={4}
           />
           
-          {/* 自动识别文本按钮 */}
-          {isSpeechSupported && videoUrl && (
-            <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button 
-                onClick={isTranscribing ? stopTranscription : handleAutoTranscribe} 
-                className={`btn ${isTranscribing ? 'btn-danger' : 'btn-info'} btn-small`}
-              >
-                <Mic size={16} />
-                {isTranscribing ? '停止识别' : '自动识别文本'}
-              </button>
-              
-              {/* 转录状态 */}
-              {isTranscribing && (
-                <div style={{ fontSize: '14px', color: 'var(--text-secondary)', flex: 1 }}>
-                  {transcription}
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         <div className="form-group">
